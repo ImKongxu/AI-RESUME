@@ -1,0 +1,24 @@
+# 核心依赖
+fastapi==0.115.0         # Web框架
+uvicorn==0.30.6          # ASGI服务器
+python-dotenv==1.1.1     # 环境变量管理
+pydantic==2.9.2          # 数据验证
+Markdown==3.9            # Markdown解析
+weasyprint==66.0         # PDF生成
+openai==2.1.0            # DeepSeek API客户端
+requests==2.32.3         # HTTP请求（用于测试）
+PyYAML==6.0.3            # YAML解析（可能被某些依赖使用）
+
+# 可能的间接依赖（保留以避免兼容性问题）
+starlette==0.38.6        # FastAPI依赖
+pillow==11.3.0           # 图像处理（可能被weasyprint使用）
+cssselect2==0.8.0        # CSS选择器（weasyprint依赖）
+fonttools==4.60.1        # 字体工具（weasyprint依赖）
+pydyf==0.11.0            # PDF生成工具（weasyprint依赖）
+pyphen==0.17.2           # 连字处理（weasyprint依赖）
+tinycss2==1.4.0          # CSS解析（weasyprint依赖）
+webencodings==0.5.1      # Web编码处理（weasyprint依赖）
+h11==0.16.0              # HTTP/1.1协议（uvicorn依赖）
+websockets==15.0.1       # WebSocket支持（uvicorn依赖）
+annotated-types==0.7.0   # 类型注解（pydantic依赖）
+typing_extensions==4.15.0 # 类型扩展（pydantic依赖）
