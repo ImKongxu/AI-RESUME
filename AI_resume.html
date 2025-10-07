@@ -1,283 +1,118 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>邮简可寻</title>
-  <style>
-    /* ============ 基础变量 ============ */
-    :root {
-      --primary: #2563eb;
-      --bg-color: #f9fafb;
-      --card-bg: #ffffff;
-      --divider: #e5e7eb;
-      --text-dark: #1f2937;
-      --text-light: #6b7280;
-      --user-bubble: #2563eb;
-      --bot-bubble: #f3f4f6;
-      --sidebar-width: 280px;
-      --sidebar-bg: #f3f4f6;
-    }
+<meta charset="UTF-8" />
+<title>AI 简历生成器（一次性 ID 版）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+/* ========== 极简布局 ========== */
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;}
+body{display:flex;height:100vh;background:#f7f7f7;}
+h3{margin-bottom:8px;font-size:15px;}
+input,textarea,button{font-size:14px;padding:6px 8px;border:1px solid #bbb;border-radius:4px;}
+button{cursor:pointer;background:#007bff;color:#fff;border-color:#007bff;}
+button:hover{background:#0056b3;}
+textarea{resize:vertical;width:100%;}
+/* 左侧预览 */
+#left{flex:1;padding:20px;overflow:auto;background:#fff;border-right:1px solid #e5e5e5;}
+#resumePreview{background:#fafafa;padding:18px;border-radius:6px;font-size:14px;line-height:1.7;white-space:pre-wrap;}
+/* 右侧对话 */
+#right {width: 420px;display: flex;flex-direction: column;padding: 20px;background: #fff;margin-bottom: 40px; 
+}
 
-    /* ============ 页面整体布局 ============ */
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-dark);
-      display: flex;
-      height: 100vh;
-    }
-
-    /* ============ 侧边栏 ============ */
-    .sidebar {
-      width: var(--sidebar-width);
-      background-color: var(--sidebar-bg);
-      border-right: 1px solid var(--divider);
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.3s ease;
-      position: relative;
-    }
-
-    .sidebar-header {
-      padding: 1rem;
-      border-bottom: 1px solid var(--divider);
-      position: relative;
-    }
-
-    .new-chat-btn {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .new-chat-btn:hover {
-      background-color: #1d4ed8;
-    }
-
-    .history-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.5rem;
-    }
-
-    .history-item {
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .history-item:hover {
-      background-color: var(--divider);
-    }
-
-    .history-item.active {
-      background-color: var(--primary);
-      color: white;
-    }
-
-    /* ============ 主内容区 ============ */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ============ 顶部栏 ============ */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #1d4ed8;
-      padding: 1rem;
-      position: relative;
-      border-radius: 12px;
-      margin: 0.5rem;
-      color: white;
-    }
-
-    .title-container {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem; /* 图片和文字之间的间距 */
-      font-size: 3rem;
-    }
-
-    .header-logo {
-      height: 1.2em; /* 使用em单位与文字高度匹配 */
-      width: auto;
-      vertical-align: middle; /* 确保图片与文字垂直对齐 */
-    }
-
-    .toggle-sidebar {
-      position: absolute;
-      left: 1rem;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1rem;
-      color: white;
-      padding-top: 0;
-    }
-
-    /* ============ 主聊天区 ============ */
-    main {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    }
-    .message {
-    display: flex;
-    align-items: flex-end;
-    max-width: 70%;
-   padding: 0.75rem 1rem;
-   border-radius: 10px;
-   margin-bottom: 1rem;
-   word-wrap: break-word;
-  }
-    .message.user {
-    align-self: flex-end;
-     background-color: var(--user-bubble);
-    color: white;
-    padding: 0.75rem 1rem;
-   border-radius: 10px;
-    margin-bottom: 1rem;
-     word-wrap: break-word;
-    }
-
-    .message.bot {
-    align-self: flex-start;
-    background-color: var(--bot-bubble);
-    color: var(--text-dark);
-    flex-direction: row;
-    }
-    .bold-text {
-      font-weight: bold;
-    }
-
-    .section-title {
-      font-weight: bold;
-      font-size: 1.25rem;
-    }
-
-    .subsection {
-      font-weight: bold;
-    }
-
-    .subtitle {
-      font-weight: bold;
-    }
-
-    /* ============ 底部输入栏 ============ */
-    footer {
-      border-top: 1px solid var(--divider);
-      background-color: var(--card-bg);
-      padding: 1rem;
-      position: sticky;
-      bottom: 0;
-    }
-
-    footer form {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    footer input {
-      flex: 1;
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
-      border: 1px solid var(--divider);
-      font-size: 1rem;
-      outline: none;
-    }
-
-    footer input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 2px var(--primary);
-    }
-
-    footer button {
-      background-color: var(--primary);
-      border: none;
-      border-radius: 6px;
-      color: white;
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    footer button:hover {
-      background-color: #1d4ed8;
-    }
-
-    /* 侧边栏隐藏状态 */
-    .sidebar.collapsed {
-      transform: translateX(calc(-1 * var(--sidebar-width)));
-      position: absolute;
-      height: 100%;
-    }
-
-    /* 小屏适配 */
-    @media (max-width: 600px) {
-      .message {
-        max-width: 90%;
-      }
-    }
-  </style>
+#chatHistory{flex:1;border:1px solid #ddd;border-radius:6px;padding:10px;overflow:auto;background:#fafafa;margin-bottom:10px;font-size:13px;}
+#chatInput{display:flex;gap:6px;}
+#chatInput textarea{flex:1;height:60px;}
+/* 底部存取栏 */
+#bottomBar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e5e5;padding:10px 20px;display:flex;align-items:center;gap:12px;}
+#bottomBar input{flex:1;max-width:220px;}
+/* 初始遮罩 */
+#modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;}
+#modal{background:#fff;width:90%;max-width:640px;max-height:90vh;overflow:auto;padding:25px;border-radius:8px;display:flex;flex-direction:column;gap:12px;}
+.section{border:1px dashed #ccc;padding:10px;border-radius:4px;position:relative;}
+.section legend{font-weight:600;font-size:13px;background:#fff;padding:0 4px;}
+.addBtn{font-size:12px;margin-top:6px;}
+#resumePreview{ background:#fafafa; padding:18px; border-radius:6px; font-size:14px; line-height:1.7; }
+#resumePreview h1,#resumePreview h2,#resumePreview h3{margin:.8em 0 .4em}
+#resumePreview ul{margin-left:1.2em}
+</style>
 </head>
-
 <body>
-  <!-- 侧边栏 -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <button class="new-chat-btn">新建对话</button>
-    </div>
-    <div class="history-list">
-      <div class="history-item active">当前对话</div>
+
+<!-- ========== 1. 一次性 ID 弹窗 ========== -->
+<div id="modalOverlay">
+  <div id="modal">
+    <h2>欢迎，请先填写基本信息（一次性 ID）</h2>
+
+    <label>用户ID（自动生成，可改）</label>
+    <input id="userId" placeholder="生成或输入唯一ID" />
+
+    <h3>基本信息（* 必填）</h3>
+    <input id="baseName"      placeholder="姓名*" />
+    <input id="baseEmail"     placeholder="邮箱*" type="email" />
+    <input id="basePhone"     placeholder="电话*" />
+    <input id="baseAddress"   placeholder="地址（可选）" />
+    <input id="baseLinkedin"  placeholder="LinkedIn（可选）" />
+    <input id="baseGithub"    placeholder="GitHub（可选）" />
+
+    <fieldset class="section">
+      <legend>教育经历</legend>
+      <div id="eduList"></div>
+      <button class="addBtn" type="button" onclick="addEdu()">+ 添加教育</button>
+    </fieldset>
+
+    <fieldset class="section">
+      <legend>工作经验</legend>
+      <div id="expList"></div>
+      <button class="addBtn" type="button" onclick="addExp()">+ 添加工作</button>
+    </fieldset>
+
+    <fieldset class="section">
+      <legend>技能</legend>
+      <div id="skillList"></div>
+      <button class="addBtn" type="button" onclick="addSkill()">+ 添加技能</button>
+    </fieldset>
+
+    <fieldset class="section">
+      <legend>项目经历</legend>
+      <div id="projList"></div>
+      <button class="addBtn" type="button" onclick="addProj()">+ 添加项目</button>
+    </fieldset>
+
+    <div style="text-align:right;margin-top:10px;">
+      <button type="button" onclick="generateID()">生成 ID</button>
+      <button type="button" onclick="submitInit()">生成简历</button>
     </div>
   </div>
+</div>
 
-  <!-- 主内容区 -->
-  <div class="main-content">
-    <header>
-      <button class="toggle-sidebar">显示/隐藏侧边栏</button>
-      <div class="title-container">
-        <img src="https://github.com/shroudpro/myimages/raw/main/school.png" alt="Logo" class="header-logo">
-        <span class="header-title">邮简可寻</span>
-      </div>
-    </header>
-    <main id="messages"> <!-- 添加消息展示区域 -->
-    </main>
-    <footer>
-      <form>
-        <input type="text" id="chat-input" placeholder="输入内容并回车...">
-        <button type="button" onclick="sendMessage()">发送</button>
-      </form>
-      <div id="loading" style="display:none;">加载中...</div>
-    </footer>
+<!-- ========== 2. 主界面 ========== -->
+<div id="left">
+  <h2>简历预览</h2>
+  <div id="resumePreview">请先填写左侧信息并点击「生成简历」</div>
+</div>
+
+<div id="right">
+  <h2>对话式修改</h2>
+  <div id="chatHistory"></div>
+  <div id="chatInput">
+    <textarea id="reviseRequest" placeholder="例如：请把工作经验第二条细化成 3 条要点"></textarea>
+    <button type="button" onclick="reviseResume()">修改</button>
   </div>
+  <div style="margin-top:10px;display:flex;gap:10px;">
+    <button type="button" onclick="downloadPDF()">下载 PDF</button>
+  </div>
+</div>
 
-  <script src="script.js"></script>
-  <script>
-    // 侧边栏显示/隐藏功能
-    document.querySelector('.toggle-sidebar').addEventListener('click', function() {
-      document.querySelector('.sidebar').classList.toggle('collapsed');
-    });
-  </script>
+<!-- ========== 3. 底部存取栏 ========== -->
+<div id="bottomBar">
+  <input id="saveUserId" placeholder="当前/读取 ID" />
+  <button type="button" onclick="saveResume()">保存简历</button>
+  <button type="button" onclick="loadResume()">读取简历</button>
+</div>
+
+<!-- ========== 4. 所有 JS 在此文件 ========== -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
