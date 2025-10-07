@@ -1,184 +1,255 @@
-// 格式化消息文本
-function formatMessage(text) {
-    if (!text) return '';
-    
-    // 处理标题和换行
-    let lines = text.split('\n');
-    let formattedLines = lines.map(line => {
-        // 处理标题（**文本**）
-        line = line.replace(/\*\*(.*?)\*\*/g, '<span class="bold-text">$1</span>');
-        return line;
+/* ========== 工具 ========== */
+const API = path => `http://127.0.0.1:8080/api/resume/${path}`;
+let currentMarkdown = '';   // 当前左侧 Markdown
+let currentUserId   = '';   // 当前 ID
+
+/* 生成随机 ID */
+function generateID(){
+  document.getElementById('userId').value = Math.random().toString(36).slice(2,11);
+}
+
+/* 动态增删板块 */
+function addEdu(){
+  const container = document.getElementById('eduList');
+  const idx = container.children.length + 1;
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <input placeholder="学校*" />
+    <input placeholder="学位*" />
+    <input placeholder="专业*" />
+    <input type="month" />-<input type="month" />
+    <input placeholder="GPA（可选）" />
+    <textarea placeholder="描述（可选）"></textarea>
+    <button type="button" onclick="this.parentElement.remove()">删除</button>
+  `;
+  div.dataset.idx = idx;
+  container.appendChild(div);
+}
+function addExp(){
+  const container = document.getElementById('expList');
+  const idx = container.children.length + 1;
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <input placeholder="公司*" />
+    <input placeholder="职位*" />
+    <input type="month" />-<input type="month" />
+    <label><input type="checkbox"> 当前工作</label>
+    <textarea placeholder="描述（可选）"></textarea>
+    <button type="button" onclick="this.parentElement.remove()">删除</button>
+  `;
+  div.dataset.idx = idx;
+  container.appendChild(div);
+}
+function addSkill(){
+  const container = document.getElementById('skillList');
+  const idx = container.children.length + 1;
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <input placeholder="技能名称*" />
+    <input placeholder="熟练程度（初级/中级/高级）" />
+    <input placeholder="类别（如编程语言）" />
+    <button type="button" onclick="this.parentElement.remove()">删除</button>
+  `;
+  div.dataset.idx = idx;
+  container.appendChild(div);
+}
+function addProj(){
+  const container = document.getElementById('projList');
+  const idx = container.children.length + 1;
+  const div = document.createElement('div');
+  div.innerHTML = `
+    <input placeholder="项目名称*" />
+    <input placeholder="项目链接（可选）" />
+    <input type="month" />-<input type="month" />
+    <textarea placeholder="描述（可选）"></textarea>
+    <input placeholder="技术栈（用;分隔）" />
+    <button type="button" onclick="this.parentElement.remove()">删除</button>
+  `;
+  div.dataset.idx = idx;
+  container.appendChild(div);
+}
+
+/* 初次提交 → 生成左侧预览 */
+async function submitInit(){
+  const uid = document.getElementById('userId').value.trim();
+  if(!uid){ alert('请填写用户ID'); return; }
+  currentUserId = uid;
+  document.getElementById('saveUserId').value = uid;
+
+  const basic_info = {
+    id: uid,
+    name: document.getElementById('baseName').value.trim(),
+    email: document.getElementById('baseEmail').value.trim(),
+    phone: document.getElementById('basePhone').value.trim(),
+    address: document.getElementById('baseAddress').value.trim(),
+    linkedin: document.getElementById('baseLinkedin').value.trim(),
+    github: document.getElementById('baseGithub').value.trim()
+  };
+  const educations = [], experiences = [], skills = [], projects = [];
+
+  /* 教育 */
+  document.querySelectorAll('#eduList>div').forEach((block, i)=>{
+    const inp = block.querySelectorAll('input');
+    const txa = block.querySelector('textarea');
+    educations.push({
+      id: i+1,
+      school: inp[0].value.trim(),
+      degree: inp[1].value.trim(),
+      major: inp[2].value.trim(),
+      start_date: inp[3].value,
+      end_date: inp[4].value,
+      gpa: inp[5].value.trim(),
+      description: txa.value.trim()
     });
-    
-    // 将 ### 替换为换行，并确保每个部分都是一个段落
-    let processedText = formattedLines.join('\n');
-    let sections = processedText
-        .split('###')
-        .filter(section => section.trim())
-        .map(section => {
-            // 移除多余的换行和空格
-            let lines = section.split('\n').filter(line => line.trim());
-            
-            if (lines.length === 0) return '';
-            
-            // 处理每个部分
-            let result = '';
-            let currentIndex = 0;
-            
-            while (currentIndex < lines.length) {
-                let line = lines[currentIndex].trim();
-                
-                // 如果是数字开头（如 "1.")
-                if (/^\d+\./.test(line)) {
-                    result += `<p class="section-title">${line}</p>`;
-                }
-                // 如果是小标题（以破折号开头）
-                else if (line.startsWith('-')) {
-                    result += `<p class="subsection"><span class="bold-text">${line.replace(/^-/, '').trim()}</span></p>`;
-                }
-                // 如果是正文（包含冒号的行）
-                else if (line.includes(':')) {
-                    let [subtitle, content] = line.split(':').map(part => part.trim());
-                    result += `<p><span class="subtitle">${subtitle}</span>: ${content}</p>`;
-                }
-                // 普通文本
-                else {
-                    result += `<p>${line}</p>`;
-                }
-                currentIndex++;
-            }
-            return result;
-        });
-    
-    return sections.join('');
-}
-
-// 显示消息
-function displayMessage(role, message) {
-    const messagesContainer = document.getElementById('messages');
-    const messageElement = document.createElement('div');
-    messageElement.className = `message ${role}`;
-
-    const messageContent = document.createElement('div');
-    messageContent.className = 'message-content';
-    
-    // 用户消息直接显示，机器人消息需要格式化
-    messageContent.innerHTML = role === 'user' ? message : formatMessage(message);
-
-    
-           
-    messageElement.appendChild(messageContent); 
-    messagesContainer.appendChild(messageElement);
-    
-    // 平滑滚动到底部
-    messageElement.scrollIntoView({ behavior: 'smooth' });
-}
-
-function sendMessage() {
-    const inputElement = document.getElementById('chat-input');
-    const message = inputElement.value;
-    if (!message.trim()) return;
-
-    displayMessage('user', message);
-    inputElement.value = '';
-
-    // 显示加载动画
-    const loadingElement = document.getElementById('loading');
-    if (loadingElement) {
-        loadingElement.style.display = 'block';
-    }
-
-    const apiKey = 'APIKEY';
-    const endpoint = 'https://api.deepseek.com';
-
-    const payload = {
-        model: "deepseek-chat",
-        messages: [
-            { role: "system", content: "You are a helpful assistant" },
-            { role: "user", content: message }
-        ],
-        stream: false
-    };
-
-    fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        // 隐藏加载动画
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
-
-        if (data.choices && data.choices.length > 0) {
-            displayMessage('bot', data.choices[0].message.content);
-        } else {
-            displayMessage('bot', '出错了，请稍后再试。');
-        }
-    })
-    .catch(error => {
-        // 隐藏加载动画
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
-
-        displayMessage('bot', '出错了，请稍后再试。');
-        console.error('Error:', error);
+  });
+  /* 工作 */
+  document.querySelectorAll('#expList>div').forEach((block, i)=>{
+    const inp = block.querySelectorAll('input');
+    const txa = block.querySelector('textarea');
+    experiences.push({
+      id: i+1,
+      company: inp[0].value.trim(),
+      position: inp[1].value.trim(),
+      start_date: inp[2].value,
+      end_date: inp[3].value,
+      is_current: inp[4].checked?1:0,
+      description: txa.value.trim()
     });
-}
+  });
+  /* 技能 */
+  document.querySelectorAll('#skillList>div').forEach((block, i)=>{
+    const inp = block.querySelectorAll('input');
+    skills.push({
+      id: i+1,
+      skill_name: inp[0].value.trim(),
+      proficiency: inp[1].value.trim(),
+      category: inp[2].value.trim()
+    });
+  });
+  /* 项目 */
+  document.querySelectorAll('#projList>div').forEach((block, i)=>{
+    const inp = block.querySelectorAll('input');
+    const txa = block.querySelector('textarea');
+    projects.push({
+      id: i+1,
+      project_name: inp[0].value.trim(),
+      project_url: inp[1].value.trim(),
+      start_date: inp[2].value,
+      end_date: inp[3].value,
+      description: txa.value.trim(),
+      technologies: inp[4].value.trim()
+    });
+  });
 
-// 添加主题切换功能
-function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const chatContainer = document.querySelector('.chat-container');
-    const messages = document.querySelector('.messages');
-    
-    // 同时切换容器的深色模式
-    chatContainer.classList.toggle('dark-mode');
-    messages.classList.toggle('dark-mode');
-    
-    // 保存主题设置
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
-}
+  const payload = { basic_info, educations, experiences, skills, projects };
+  const content_request = `请根据以下结构化数据生成一份专业 Markdown 简历：\n${JSON.stringify(payload)}`;
 
-// 页面加载时检查主题设置
-document.addEventListener('DOMContentLoaded', () => {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (isDarkMode) {
-        document.body.classList.add('dark-mode');
-        document.querySelector('.chat-container').classList.add('dark-mode');
-        document.querySelector('.messages').classList.add('dark-mode');
+  try{
+    const r = await fetch(API('generate'),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ content_request })
+    });
+    const j = await r.json();
+    if(j.success){
+      currentMarkdown = j.generated_content;
+      currentMarkdown = currentMarkdown.replace(/^```markdown\s*/, '');
+      document.getElementById('resumePreview').innerHTML = marked.parse(currentMarkdown);
+      document.getElementById('modalOverlay').style.display='none';
+      pushChat('系统','已生成初始简历，可在右侧输入修改需求。');
+    }else{
+      alert('生成失败：'+j.message);
     }
-});
-
-// 添加下拉菜单功能
-function toggleDropdown(event) {
-    event.preventDefault();
-    document.getElementById('dropdownMenu').classList.toggle('show');
+  }catch(e){ alert('网络错误：'+e); }
 }
 
-// 点击其他地方关闭下拉菜单
-window.onclick = function(event) {
-    if (!event.target.matches('.dropdown button')) {
-        const dropdowns = document.getElementsByClassName('dropdown-content');
-        for (const dropdown of dropdowns) {
-            if (dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        }
-    }
+/* 对话历史 */
+function pushChat(sender, txt){
+  const box = document.getElementById('chatHistory');
+  const div = document.createElement('div');
+  div.innerHTML = `<b>${sender}:</b> ${txt}`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
 
-// 添加回车发送功能
-document.getElementById('chat-input').addEventListener('keypress', function(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
+/* 修改简历 */
+async function reviseResume(){
+  const req = document.getElementById('reviseRequest').value.trim();
+  if(!req){ alert('请输入修改需求'); return; }
+  pushChat('用户',req);
+  try{
+    const r = await fetch(API('revise'),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ resume_content: currentMarkdown, revision_request: req })
+    });
+    const j = await r.json();
+    if(j.success){
+      currentMarkdown = j.generated_content;
+      document.getElementById('resumePreview').innerHTML = marked.parse(currentMarkdown);
+      pushChat('AI','已按需求更新左侧预览。');
+      document.getElementById('reviseRequest').value='';
+    }else{
+      pushChat('系统','修改失败：'+j.message);
     }
-});
+  }catch(e){ pushChat('系统','网络错误：'+e); }
+}
+
+/* 下载 PDF */
+async function downloadPDF(){
+  try{
+    let cleanMarkdown = currentMarkdown.replace(/^markdown\s+/i, '');
+    const r = await fetch(API('markdown-to-pdf'),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ markdown_content: cleanMarkdown })
+    });
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resume_${currentUserId||'anonymous'}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){ alert('下载失败：'+e); }
+}
+
+/* 保存 / 读取 */
+async function saveResume(){
+  const uid = document.getElementById('saveUserId').value.trim();
+  if(!uid){ alert('请先填写或生成用户ID'); return; }
+  /* 仅示范骨架，可按需把完整 payload 传回 */
+  const payload = {
+    basic_info:{ id:uid, name:'', email:'', phone:'' },
+    educations:[], experiences:[], skills:[], projects:[]
+  };
+  try{
+    const r = await fetch(API('save-resume'),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    alert(j.message||'保存成功');
+  }catch(e){ alert('保存失败：'+e); }
+}
+async function loadResume(){
+  const uid = document.getElementById('saveUserId').value.trim();
+  if(!uid){ alert('请先填写用户ID'); return; }
+  try{
+    const r = await fetch(API(`get-resume/${uid}`));
+    const j = await r.json();
+    if(j.success){
+      /* 实际可再调一次 generate 重新渲染，这里仅展示数据 */
+      currentMarkdown = JSON.stringify(j.data,null,2);
+      document.getElementById('resumePreview').textContent = currentMarkdown;
+      currentUserId = uid;
+      alert('读取成功');
+    }else{
+      alert('读取失败：'+j.message);
+    }
+  }catch(e){ alert('读取失败：'+e); }
+}
+
+/* 页面加载时生成随机 ID */
+window.onload = ()=> generateID();
