@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.resume_router import router as resume_router
+from app.api.user_router import router as user_router
 import os
 from dotenv import load_dotenv
 
@@ -29,7 +30,9 @@ app.add_middleware(
 )
 
 # 添加路由包含语句
+
 app.include_router(resume_router)
+app.include_router(user_router)
 
 @app.get("/")
 def read_root():
